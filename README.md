@@ -1,108 +1,185 @@
-````markdown
-# 🛒 E-Commerce Backend (Spring Boot)
+🛒 E-Commerce Backend (Spring Boot)
+This is the backend service for an e-commerce platform built using Spring Boot. It offers a robust RESTful API for user authentication, product and order management, Stripe-based payments, and more.
 
-This is the **backend service** for an e-commerce platform built using **Spring Boot**. It offers a robust RESTful API for user authentication, product and order management, Stripe-based payments, and more.
+🚀 Getting Started
+✅ Prerequisites
+Java 17 or higher
 
----
+Maven
 
-## 🚀 Getting Started
+Stripe account
 
-### ✅ Prerequisites
-- Java 17 or higher
-- Maven
-- Stripe account
+⚙️ Configuration
+1. Clone the repository
+git clone https://github.com/yourusername/backend-springboot.git
+cd backend-springboot
 
-### ⚙️ Configuration
-1. **Clone the repository**
+2. Configure application.properties
+Set up your database connection and Stripe API key in src/main/resources/application.properties:
 
-   ```bash
-   git clone https://github.com/yourusername/backend-springboot.git
-   cd backend-springboot
-   ```
+stripe.api.key=your_stripe_key
+spring.datasource.url=your_db_url
+spring.datasource.username=your_username
+spring.datasource.password=your_password
 
-2. **Configure `application.properties`**
+3. Run the project
+./mvnw spring-boot:run
 
-   Set up your database connection and Stripe API key in `src/main/resources/application.properties`:
+The server will start on port 8080. You can access the API at http://localhost:8080.
 
-   ```properties
-   stripe.apiKey=your_stripe_key
-   spring.datasource.url=your_db_url
-   spring.datasource.username=your_username
-   spring.datasource.password=your_password
-   ```
-
-3. **Run the project**
-
-   ```bash
-   ./mvnw spring-boot:run
-   ```
-
-The server will start on port `8080`. You can access the API at `http://localhost:8080`.
-
------
-
-## 📁 Project Structure
-
-```
+🗄️ Project Structure
 src/
 ├── main/
 │   ├── java/com/example/backend/
 │   │   ├── BackendApplication.java
 │   │   ├── config/             # Spring configurations
 │   │   ├── controller/         # REST API endpoints
-│   │   ├── dto/                # Data Transfer Objects
-│   │   ├── entity/             # JPA Entities
-│   │   ├── repository/         # Spring Data JPA repositories
-│   │   ├── security/           # Security configurations (JWT)
-│   │   └── service/            # Business logic
+│   │   ├── model/              # JPA entities and DTOs
+│   │   ├── repository/         # Data access interfaces
+│   │   ├── service/            # Business logic
+│   │   └── util/               # Utility classes
 │   └── resources/
-│       └── application.properties # Application properties
-└── test/                     # Unit and integration tests
-```
+│       ├── application.properties # Application configuration
+│       └── static/             # Static resources (if any)
+└── test/
+    └── java/com/example/backend/
+        └── BackendApplicationTests.java # Unit and integration tests
 
------
+🔒 Security
+User authentication with JWT (JSON Web Tokens).
 
-## 🌐 API Endpoints
+Password hashing using BCrypt.
 
-The backend exposes the following primary API endpoints:
+Role-based authorization (e.g., ADMIN, USER).
 
-- `/api/auth/register`, `/api/auth/login` (User authentication)
-- `/api/users` (User management)
-- `/api/products`, `/api/products/{productId}/reviews` (Product and product review management)
-- `/api/categories` (Product categories)
-- `/api/orders`, `/api/order-items` (Order and order item management)
-- `/api/lists` (Wishlist functionality)
-- `/api/payments/checkout` (Stripe payment integration)
-- `/api/admin/users` (Admin-specific user management)
-- `/api/sellers`, `/api/seller/dashboard` (Seller management and dashboard)
-- `/api/notifications` (System notifications)
+💳 Payment Integration (Stripe)
+Secure payment processing using Stripe API.
 
------
+Webhook handling for asynchronous payment events.
 
-## 🧰 Tech Stack
+📦 API Endpoints
+Category
 
-- **Java 17+**: The core programming language.
-- **Spring Boot**: Framework for building production-ready Spring applications.
-- **Spring Security (JWT)**: For authentication and authorization using JSON Web Tokens.
-- **Spring Data JPA (Hibernate)**: For data persistence and database interactions.
-- **Stripe Java SDK**: Integration with Stripe for payment processing.
-- **Lombok**: Reduces boilerplate code (e.g., getters, setters).
-- **Maven**: Dependency management and build automation.
+Endpoint
 
------
+Method
 
-## 📌 Features
+Description
 
-- User Authentication (JWT-based)
-- Product & Order Management
-- Stripe Payment Integration
-- Seller & Admin Dashboards
-- System Notifications
-- Robust RESTful API design
+Authentication
 
------
+/api/auth/register
 
-## 📄 License
+POST
 
-MIT License - feel free to use and extend\!
-````
+Register a new user
+
+
+
+/api/auth/login
+
+POST
+
+Authenticate user and get JWT
+
+Users
+
+/api/users/{id}
+
+GET
+
+Get user details (requires authentication)
+
+
+
+/api/users/{id}
+
+PUT
+
+Update user details (requires authentication)
+
+Products
+
+/api/products
+
+GET
+
+Get all products
+
+
+
+/api/products/{id}
+
+GET
+
+Get product by ID
+
+
+
+/api/products
+
+POST
+
+Add a new product (ADMIN only)
+
+
+
+/api/products/{id}
+
+PUT
+
+Update product (ADMIN only)
+
+
+
+/api/products/{id}
+
+DELETE
+
+Delete product (ADMIN only)
+
+Orders
+
+/api/orders
+
+GET
+
+Get all orders (ADMIN) or user's orders (USER)
+
+
+
+/api/orders/{id}
+
+GET
+
+Get order by ID
+
+
+
+/api/orders
+
+POST
+
+Create a new order
+
+Payments
+
+/api/payments/create-intent
+
+POST
+
+Create a Stripe Payment Intent
+
+
+
+/api/payments/webhook
+
+POST
+
+Stripe webhook endpoint
+
+🤝 Contributing
+Contributions are welcome! Please feel free to open issues or submit pull requests.
+
+📄 License
+This project is licensed under the MIT License - see the LICENSE file for details.
