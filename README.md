@@ -1,185 +1,138 @@
-🛒 E-Commerce Backend (Spring Boot)
-This is the backend service for an e-commerce platform built using Spring Boot. It offers a robust RESTful API for user authentication, product and order management, Stripe-based payments, and more.
+# Backend Spring Boot Architecture
 
-🚀 Getting Started
-✅ Prerequisites
-Java 17 or higher
+This project is a backend REST API for an e-commerce platform, built with **Spring Boot**. It provides endpoints for user authentication, product management, order processing, reviews, wishlists, payments (Stripe integration), notifications, and more.
 
-Maven
+---
 
-Stripe account
+## Features
 
-⚙️ Configuration
-1. Clone the repository
-git clone https://github.com/yourusername/backend-springboot.git
-cd backend-springboot
+- **User Authentication & Authorization**
+  - JWT-based authentication  
+  - Role-based access control  
+  - Registration & login endpoints  
 
-2. Configure application.properties
-Set up your database connection and Stripe API key in src/main/resources/application.properties:
+- **Product Management**
+  - CRUD operations for products and categories  
+  - Seller-specific product management  
 
-stripe.api.key=your_stripe_key
-spring.datasource.url=your_db_url
-spring.datasource.username=your_username
-spring.datasource.password=your_password
+- **Order & Payment**
+  - Order and order item management  
+  - Stripe payment integration  
 
-3. Run the project
-./mvnw spring-boot:run
+- **Wishlist**
+  - Add/remove products to/from user wishlists  
 
-The server will start on port 8080. You can access the API at http://localhost:8080.
+- **Reviews**
+  - Product review creation and listing  
 
-🗄️ Project Structure
-src/
-├── main/
-│   ├── java/com/example/backend/
-│   │   ├── BackendApplication.java
-│   │   ├── config/             # Spring configurations
-│   │   ├── controller/         # REST API endpoints
-│   │   ├── model/              # JPA entities and DTOs
-│   │   ├── repository/         # Data access interfaces
-│   │   ├── service/            # Business logic
-│   │   └── util/               # Utility classes
-│   └── resources/
-│       ├── application.properties # Application configuration
-│       └── static/             # Static resources (if any)
-└── test/
-    └── java/com/example/backend/
-        └── BackendApplicationTests.java # Unit and integration tests
+- **Notifications**
+  - User notifications with read/unread status  
 
-🔒 Security
-User authentication with JWT (JSON Web Tokens).
+---
 
-Password hashing using BCrypt.
+## Tech Stack
 
-Role-based authorization (e.g., ADMIN, USER).
+- **Java 17+**  
+- **Spring Boot**  
+- **Spring Security**  
+- **Spring Data JPA (Hibernate)**  
+- **Lombok**  
+- **Stripe Java SDK**  
+- **JWT (JSON Web Token)**  
+- **H2/MySQL/PostgreSQL** (configurable)  
+- **Maven**  
 
-💳 Payment Integration (Stripe)
-Secure payment processing using Stripe API.
+---
 
-Webhook handling for asynchronous payment events.
+## Project Structure
 
-📦 API Endpoints
-Category
+```
+src/main/java/com/example/backend/
+├── config/         # Security and CORS configuration
+├── controller/     # REST API controllers
+├── dto/            # Data Transfer Objects
+├── entity/         # JPA entities
+├── repository/     # Spring Data JPA repositories
+├── security/       # JWT utilities and filters
+├── service/        # Service interfaces
+├── service/impl/   # Service implementations
+└── BackendApplication.java
+```
 
-Endpoint
+---
 
-Method
+## Key Endpoints
 
-Description
+| Resource      | Endpoint Example                          | Description                  |
+|---------------|--------------------------------------------|------------------------------|
+| Auth          | `/api/auth/register`, `/api/auth/login`    | User registration & login    |
+| Products      | `/api/products`, `/api/products/{id}`      | Product CRUD                 |
+| Categories    | `/api/categories`                          | Category CRUD                |
+| Orders        | `/api/orders`, `/api/order-items`          | Order management             |
+| Reviews       | `/api/products/{productId}/reviews`        | Product reviews              |
+| Wishlist      | `/api/lists`                               | User wishlist management     |
+| Payments      | `/api/payments/checkout`                   | Stripe payment integration   |
+| Notifications | `/api/notifications`                       | User notifications           |
+| Users         | `/api/users`                               | User management              |
+| Roles         | `/api/roles`                               | Role management              |
 
-Authentication
+---
 
-/api/auth/register
+## Security
 
-POST
+- **JWT Authentication**: All protected endpoints require a valid JWT in the `Authorization` header.  
+- **CORS**: Configured for frontend at [`http://localhost:4200`](http://localhost:4200).
 
-Register a new user
+---
 
+## Running the Application
 
+1. **Clone the repository**
+   ```sh
+   git clone https://github.com/your-org/your-repo.git
+   cd backend-springboot
+   ```
 
-/api/auth/login
+2. **Configure Database & Stripe**
+   - Edit `src/main/resources/application.properties` for your DB and Stripe keys.
 
-POST
+3. **Build & Run**
+   ```sh
+   mvn clean install
+   mvn spring-boot:run
+   ```
 
-Authenticate user and get JWT
+4. **API Docs**
+   - (Optional) Integrate Swagger/OpenAPI for interactive docs.
 
-Users
+---
 
-/api/users/{id}
+## Testing
 
-GET
+- Unit and integration tests are located under:  
+  `src/test/java/com/example/backend/`
 
-Get user details (requires authentication)
+---
 
+## Contributing
 
+1. Fork the repo  
+2. Create your feature branch  
+   ```sh
+   git checkout -b feature/YourFeature
+   ```
+3. Commit your changes  
+4. Push to the branch  
+5. Open a Pull Request  
 
-/api/users/{id}
+---
 
-PUT
+## License
 
-Update user details (requires authentication)
+This project is licensed under the MIT License.
 
-Products
+---
 
-/api/products
+## Contact
 
-GET
-
-Get all products
-
-
-
-/api/products/{id}
-
-GET
-
-Get product by ID
-
-
-
-/api/products
-
-POST
-
-Add a new product (ADMIN only)
-
-
-
-/api/products/{id}
-
-PUT
-
-Update product (ADMIN only)
-
-
-
-/api/products/{id}
-
-DELETE
-
-Delete product (ADMIN only)
-
-Orders
-
-/api/orders
-
-GET
-
-Get all orders (ADMIN) or user's orders (USER)
-
-
-
-/api/orders/{id}
-
-GET
-
-Get order by ID
-
-
-
-/api/orders
-
-POST
-
-Create a new order
-
-Payments
-
-/api/payments/create-intent
-
-POST
-
-Create a Stripe Payment Intent
-
-
-
-/api/payments/webhook
-
-POST
-
-Stripe webhook endpoint
-
-🤝 Contributing
-Contributions are welcome! Please feel free to open issues or submit pull requests.
-
-📄 License
-This project is licensed under the MIT License - see the LICENSE file for details.
+For questions or support, please open an issue or contact the maintainer.
