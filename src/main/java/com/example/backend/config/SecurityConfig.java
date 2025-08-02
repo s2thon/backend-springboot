@@ -10,6 +10,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -22,6 +23,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @RequiredArgsConstructor
+@EnableMethodSecurity 
 public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
@@ -33,58 +35,56 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authenticationProvider(authenticationProvider())
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            // YETKİLENDİRME KURALLARINI YENİDEN DÜZENLİYORUZ:
             .authorizeHttpRequests(auth -> auth
-                // 1) OPTIONS her yere açık
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                // 2) Auth işlemleri (login/register) açık
+                // =====================================================================
+                // ADIM 1: HERKESE AÇIK YOLLAR (permitAll)
+                // Kimlik doğrulaması gerektirmeyen tüm endpoint'ler.
+                // =====================================================================
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/products/*/reviews").permitAll()
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // OPTIONS istekleri genellikle public olmalıdır.
 
-                // 3) Public GET’ler (ürün, kategori, yorum)
-                .requestMatchers(HttpMethod.GET,
-                                 "/api/products/**",
-                                 "/api/categories/**",
-                                 "/api/products/*/reviews")
-                  .permitAll()
+                // =====================================================================
+                // ADIM 2: ROL BAZLI ÖZEL KURALLAR
+                // Belirli bir role sahip olmayı gerektiren EN ÖZEL yollar.
+                // En spesifik olanlar en başa yazılır.
+                // =====================================================================
 
-                // 4) Ödeme endpoint’i (kullanıcı logged in olmalı)
-                .requestMatchers(HttpMethod.POST, "/api/payments/**")
-                  .authenticated()
+                 // 2. EN SPESİFİK ROL BAZLI KURALLAR (AI Controller için olanlar dahil)
+            .requestMatchers("/api/ai/generate-description", 
+                             "/api/ai/analyze-price", 
+                             "/api/ai/preview-image", 
+                             "/api/ai/save-image").hasRole("SELLER")
+            .requestMatchers("/api/ai/chat/invoke").hasRole("USER")
 
-                // 5) Sipariş oluşturma (checkout sonrası)
-                .requestMatchers(HttpMethod.POST, "/api/orders/create-after-checkout")
-                  .authenticated()
 
-                // 6) Satıcı onay endpoint’i → yalnızca SATI­C­I rolü
-                .requestMatchers(HttpMethod.PUT, "/api/orders/seller/orders/**")
-                  .hasRole("SELLER")
 
-                // 7) Tüm diğer /api/orders/** istekleri → authenticated
-                .requestMatchers("/api/orders/**").hasAnyRole("USER", "SELLER", "ADMIN")
-
-                // Seller API erişimleri
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/seller/**").hasRole("SELLER")
-
-                // Satıcı sipariş işlemleri
-                .requestMatchers("/api/orders/seller/**").hasRole("SELLER")
+                .requestMatchers(HttpMethod.PUT, "/api/orders/seller/orders/**").hasRole("SELLER")
                 .requestMatchers(HttpMethod.PUT, "/api/orders/*/approve").hasRole("SELLER")
+
+                // =====================================================================
+                // ADIM 3: BİRDEN FAZLA ROLÜN ERİŞEBİLECEĞİ YOLLAR
+                // =====================================================================
+                .requestMatchers("/api/orders/**").hasAnyRole("USER", "SELLER", "ADMIN")
+                .requestMatchers("/api/user/**").hasAnyRole("USER", "ADMIN", "SELLER")
                 .requestMatchers(HttpMethod.PUT, "/api/orders/*/reject").hasAnyRole("USER", "SELLER", "ADMIN")
 
-                // 8) Rol bazlı genel kurallar
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/user/**")
-                  .hasAnyRole("USER","ADMIN","SELLER")
-
-                // Admin endpoints
-                .requestMatchers("/api/admin/dashboard/**").hasRole("ADMIN")
-                .requestMatchers("/api/admin/users/**").hasRole("ADMIN")
-                .requestMatchers("/api/admin/orders/**").hasRole("ADMIN") // Açıkça izin ver
-
-                // 9) Geri kalan tüm istekler authenticated
+                // =====================================================================
+                // ADIM 4: GERİYE KALAN TÜM YOLLAR
+                // Yukarıdaki kuralların hiçbirine uymayan diğer tüm istekler için
+                // sadece kimlik doğrulaması (geçerli bir token) yeterlidir.
+                // /api/ai/**, /api/payments/** gibi yollar bu kurala takılacaktır.
+                // Rol kontrolü ise bu yolların Controller'larındaki @PreAuthorize'a bırakılmıştır.
+                // =====================================================================
                 .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()));
+            );
 
         return http.build();
     }
@@ -94,6 +94,9 @@ public class SecurityConfig {
         CorsConfiguration cfg = new CorsConfiguration();
         // Angular port
         cfg.addAllowedOrigin("http://localhost:4200");
+
+        cfg.addAllowedOrigin("http://localhost:8001"); 
+
         // Tüm metodlar (GET, POST, OPTIONS…)
         cfg.addAllowedMethod("*");
         // Authorization header’ına izin ver!

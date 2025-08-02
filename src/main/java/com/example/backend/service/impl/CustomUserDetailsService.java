@@ -59,10 +59,13 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         com.example.backend.entity.User user = userRepository.findByEmail(username)
             .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+
+        SimpleGrantedAuthority authority = new SimpleGrantedAuthority(user.getRole().getRoleName());
+
         return new User(
             user.getEmail(),
             user.getPassword(),
-            Collections.singletonList(new SimpleGrantedAuthority(user.getRole().getRoleName()))
+            Collections.singletonList(authority)
         );
     }
 }
