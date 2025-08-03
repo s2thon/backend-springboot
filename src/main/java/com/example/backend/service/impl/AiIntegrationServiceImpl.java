@@ -15,10 +15,11 @@ public class AiIntegrationServiceImpl implements AiIntegrationService {
 
     // application.properties dosyasındaki değeri buraya enjekte ediyoruz.
     public AiIntegrationServiceImpl(
-            WebClient.Builder webClientBuilder,
+            WebClient webClient,
             @Value("${fast-api.base-url}") String fastApiBaseUrl
     ) {
-        this.webClient = webClientBuilder
+        this.webClient = webClient
+                .mutate()
                 .baseUrl(fastApiBaseUrl) // Değeri özellikler dosyasından al
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build();

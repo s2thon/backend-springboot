@@ -49,6 +49,17 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/products/*/reviews").permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // OPTIONS istekleri genellikle public olmalıdır.
 
+
+                // =====================================================================
+                // YENİ VE KRİTİK KURALLAR: SELLER Yetkileri
+                // =====================================================================
+                // SELLER rolü, ürün oluşturabilsin (POST), güncelleyebilsin (PUT) ve silebilsin (DELETE).
+                .requestMatchers(HttpMethod.POST, "/api/products").hasRole("SELLER")
+                .requestMatchers(HttpMethod.PUT, "/api/products/**").hasRole("SELLER")
+                .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("SELLER")
+
+                
+
                 // =====================================================================
                 // ADIM 2: ROL BAZLI ÖZEL KURALLAR
                 // Belirli bir role sahip olmayı gerektiren EN ÖZEL yollar.
