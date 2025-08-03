@@ -11,7 +11,7 @@ public interface AiIntegrationService {
     /**
      * Gelen isteği ve JWT'yi FastAPI'deki belirtilen yola iletir.
      *
-     * @param path        FastAPI'de hedeflenen yol (örn: "/chat/invoke")
+     * @param path        FastAPI'de hedeflenen yol (örn: "/chat-invoke")
      * @param requestBody FastAPI'ye gönderilecek JSON gövdesi
      * @param jwtToken    Kullanıcının "Bearer " ön ekiyle birlikte tam JWT'si
      * @return FastAPI'den gelen yanıtı içeren bir Mono<String>

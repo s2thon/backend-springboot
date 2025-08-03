@@ -60,7 +60,7 @@ public class SecurityConfig {
                              "/api/ai/analyze-price", 
                              "/api/ai/preview-image", 
                              "/api/ai/save-image").hasRole("SELLER")
-            .requestMatchers("/api/ai/chat/invoke").hasRole("USER")
+            .requestMatchers("/api/ai/chat-invoke").hasRole("USER")
 
 
 

@@ -33,11 +33,11 @@ public class AiIntegrationController {
      * @param request Gelen HTTP isteği, JWT'yi almak için kullanılır.
      * @return FastAPI'den gelen sohbet yanıtı.
      */
-    @PostMapping("/chat/invoke")
-    // @PreAuthorize("hasRole('USER')")
+    @PostMapping("/chat-invoke")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> invokeChat(@RequestBody Object body, HttpServletRequest request) {
         final String jwtToken = request.getHeader(HttpHeaders.AUTHORIZATION);
-        String fastApiResponse = aiIntegrationService.forwardRequest("/chat/invoke", body, jwtToken)
+        String fastApiResponse = aiIntegrationService.forwardRequest("/chat-invoke", body, jwtToken)
                                                      .block(); // <-- EN ÖNEMLİ DEĞİŞİKLİK BURADA
 
         // Gelen cevabı direkt olarak dön.
@@ -52,7 +52,7 @@ public class AiIntegrationController {
      * @return FastAPI'den gelen oluşturulmuş ürün açıklaması.
      */
     @PostMapping("/generate-description")
-    // @PreAuthorize("hasRole('SELLER')")
+    @PreAuthorize("hasRole('SELLER')")
     public ResponseEntity<String> generateDescription(@RequestBody Object body, HttpServletRequest request) {
         final String jwtToken = request.getHeader(HttpHeaders.AUTHORIZATION);
         String fastApiResponse = aiIntegrationService.forwardRequest("/generate-description", body, jwtToken)
@@ -68,7 +68,7 @@ public class AiIntegrationController {
      * @return FastAPI'den gelen fiyat analizi sonucu.
      */
     @PostMapping("/analyze-price")
-    // @PreAuthorize("hasRole('SELLER')")
+    @PreAuthorize("hasRole('SELLER')")
     public ResponseEntity<String> analyzePrice(@RequestBody Object body, HttpServletRequest request) {
         final String jwtToken = request.getHeader(HttpHeaders.AUTHORIZATION);
         String fastApiResponse = aiIntegrationService.forwardRequest("/analyze-price", body, jwtToken)
@@ -84,7 +84,7 @@ public class AiIntegrationController {
      * @return FastAPI'den gelen, genellikle base64 formatında bir görsel verisi.
      */
     @PostMapping("/preview-image")
-    // @PreAuthorize("hasRole('SELLER')")
+    @PreAuthorize("hasRole('SELLER')")
     public ResponseEntity<String> previewImage(@RequestBody Object body, HttpServletRequest request) {
         final String jwtToken = request.getHeader(HttpHeaders.AUTHORIZATION);
         String fastApiResponse = aiIntegrationService.forwardRequest("/preview-image", body, jwtToken)
@@ -100,7 +100,7 @@ public class AiIntegrationController {
      * @return FastAPI'den gelen, görselin kaydedildiği URL veya bir başarı mesajı.
      */
     @PostMapping("/save-image")
-    // @PreAuthorize("hasRole('SELLER')")
+    @PreAuthorize("hasRole('SELLER')")
     public ResponseEntity<String> saveImage(@RequestBody Object body, HttpServletRequest request) {
         final String jwtToken = request.getHeader(HttpHeaders.AUTHORIZATION);
         String fastApiResponse = aiIntegrationService.forwardRequest("/save-image", body, jwtToken)
