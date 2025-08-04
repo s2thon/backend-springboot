@@ -105,8 +105,7 @@ public class SecurityConfig {
         CorsConfiguration cfg = new CorsConfiguration();
         // Angular port
         cfg.addAllowedOrigin("http://localhost:4200");
-
-        cfg.addAllowedOrigin("http://localhost:8001"); 
+        //cfg.addAllowedOrigin("https://s2thon-frontend.onrender.com");
 
         // Tüm metodlar (GET, POST, OPTIONS…)
         cfg.addAllowedMethod("*");
