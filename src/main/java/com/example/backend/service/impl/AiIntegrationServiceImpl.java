@@ -7,6 +7,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import java.time.Duration;
 import org.slf4j.Logger; // <-- Logger'ı import et
 import org.slf4j.LoggerFactory; // <-- LoggerFactory'yi import et
 
@@ -42,6 +43,8 @@ public class AiIntegrationServiceImpl implements AiIntegrationService {
                 .bodyValue(requestBody)
                 .retrieve()
                 .bodyToMono(String.class) // Yanıtı String olarak al
+
+                .timeout(Duration.ofSeconds(60))
 
                 .switchIfEmpty(Mono.just("{\"output\": \"AI servisinden boş bir yanıt alındı. Lütfen tekrar deneyin.\", \"suggestions\": []}"))
                 
