@@ -7,11 +7,15 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import org.slf4j.Logger; // <-- Logger'ı import et
+import org.slf4j.LoggerFactory; // <-- LoggerFactory'yi import et
 
 @Service // Spring'in bu sınıfı bir Bean olarak tanımasını sağlar
 public class AiIntegrationServiceImpl implements AiIntegrationService {
 
     private final WebClient webClient;
+
+    private static final Logger logger = LoggerFactory.getLogger(AiIntegrationServiceImpl.class);
 
     // application.properties dosyasındaki değeri buraya enjekte ediyoruz.
     public AiIntegrationServiceImpl(
@@ -35,6 +39,9 @@ public class AiIntegrationServiceImpl implements AiIntegrationService {
                 .header(HttpHeaders.AUTHORIZATION, jwtToken) // JWT'yi başlığa ekle
                 .bodyValue(requestBody)
                 .retrieve()
-                .bodyToMono(String.class); // Yanıtı String olarak al
+                .bodyToMono(String.class) // Yanıtı String olarak al
+
+                .doOnError(error -> logger.error("FastAPI request failed. Path: {}, Error: {}", path, error.getMessage()))
+                .onErrorResume(error -> Mono.just("{\"error\": \"AI service is currently unavailable. Please try again later.\"}"));
     }
 }
