@@ -34,6 +34,8 @@ public class AiIntegrationServiceImpl implements AiIntegrationService {
         // Hata ayıklama için isteği loglayabiliriz (isteğe bağlı)
         // System.out.println("Forwarding request to: " + path + " with token: " + jwtToken);
 
+        logger.info("Forwarding request to FastAPI path: {}", path);
+
         return this.webClient.post()
                 .uri(path)
                 .header(HttpHeaders.AUTHORIZATION, jwtToken) // JWT'yi başlığa ekle
@@ -41,7 +43,11 @@ public class AiIntegrationServiceImpl implements AiIntegrationService {
                 .retrieve()
                 .bodyToMono(String.class) // Yanıtı String olarak al
 
-                .doOnError(error -> logger.error("FastAPI request failed. Path: {}, Error: {}", path, error.getMessage()))
-                .onErrorResume(error -> Mono.just("{\"error\": \"AI service is currently unavailable. Please try again later.\"}"));
+                .switchIfEmpty(Mono.just("{\"output\": \"AI servisinden boş bir yanıt alındı. Lütfen tekrar deneyin.\", \"suggestions\": []}"))
+                
+                // 2. Eğer bir hata olursa (timeout, 500 hatası vb.), bunu logla
+                //    ve yine geçerli bir hata JSON'u döndür.
+                .doOnError(error -> logger.error("FastAPI isteği başarısız oldu. Path: {}, Hata: {}", path, error.getMessage()))
+                .onErrorResume(error -> Mono.just("{\"output\": \"AI servisi şu anda mevcut değil veya bir hata oluştu. Lütfen daha sonra tekrar deneyin.\", \"suggestions\": []}"));
     }
 }
