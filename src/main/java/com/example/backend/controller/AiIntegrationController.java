@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
+import java.util.Map;
 
 /**
  * Spring Boot ve FastAPI arasında bir köprü (proxy) görevi gören merkezi controller.
@@ -35,12 +35,16 @@ public class AiIntegrationController {
      */
     @PostMapping("/chat-invoke")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<String> invokeChat(@RequestBody Object body, HttpServletRequest request) {
+    // 1. @RequestBody'yi doğrudan bir Map<String, String> olarak alıyoruz.
+    //    Bu, {"message": "..."} JSON'uyla birebir uyumludur.
+    public ResponseEntity<String> invokeChat(@RequestBody Map<String, String> body, HttpServletRequest request) {
         final String jwtToken = request.getHeader(HttpHeaders.AUTHORIZATION);
-        String fastApiResponse = aiIntegrationService.forwardRequest("/chat-invoke", body, jwtToken)
-                                                     .block(); // <-- EN ÖNEMLİ DEĞİŞİKLİK BURADA
 
-        // Gelen cevabı direkt olarak dön.
+        // 2. Artık DTO veya karmaşık çıkarma işlemlerine gerek yok.
+        //    Gelen 'body' zaten FastAPI'nin beklediği formattadır.
+        String fastApiResponse = aiIntegrationService.forwardRequest("/chat-invoke", body, jwtToken)
+                                                     .block();
+
         return ResponseEntity.ok(fastApiResponse);
     }
 
