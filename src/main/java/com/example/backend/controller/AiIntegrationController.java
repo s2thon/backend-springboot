@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Spring Boot ve FastAPI arasında bir köprü (proxy) görevi gören merkezi controller.
@@ -40,12 +41,19 @@ public class AiIntegrationController {
     public ResponseEntity<String> invokeChat(@RequestBody Map<String, String> body, HttpServletRequest request) {
         final String jwtToken = request.getHeader(HttpHeaders.AUTHORIZATION);
 
-        // 2. Artık DTO veya karmaşık çıkarma işlemlerine gerek yok.
-        //    Gelen 'body' zaten FastAPI'nin beklediği formattadır.
-        String fastApiResponse = aiIntegrationService.forwardRequest("/chat-invoke", body, jwtToken)
-                                                     .block();
+        // 1. Servisten gelen sonucu bir Optional'a sararak alıyoruz.
+        //    .blockOptional() metodu, eğer Mono boşsa (null'a neden olacaksa),
+        //    içi boş bir Optional döndürür. Bu, NullPointerException'ı önler.
+        Optional<String> fastApiResponseOptional = aiIntegrationService.forwardRequest("/chat-invoke", body, jwtToken)
+                                                                       .blockOptional();
 
-        return ResponseEntity.ok(fastApiResponse);
+        // 2. Gelen cevabın null veya boş olup olmadığını kontrol ediyoruz.
+        //    Eğer boşsa, frontend'in çökmesini önlemek için güvenli bir varsayılan JSON döndürüyoruz.
+        String responseBody = fastApiResponseOptional
+                .orElse("{\"output\": \"AI servisinden bir hata nedeniyle yanıt alınamadı.\", \"suggestions\": []}");
+
+        // 3. Her durumda geçerli bir JSON string'i içeren cevabı frontend'e gönderiyoruz.
+        return ResponseEntity.ok(responseBody);
     }
 
     /**
