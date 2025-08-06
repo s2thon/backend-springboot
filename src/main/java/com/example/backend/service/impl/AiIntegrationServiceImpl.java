@@ -44,7 +44,6 @@ public class AiIntegrationServiceImpl implements AiIntegrationService {
                 .retrieve()
                 .bodyToMono(String.class) // Yanıtı String olarak al
 
-                .timeout(Duration.ofSeconds(60))
 
                 .switchIfEmpty(Mono.just("{\"output\": \"AI servisinden boş bir yanıt alındı. Lütfen tekrar deneyin.\", \"suggestions\": []}"))
                 
