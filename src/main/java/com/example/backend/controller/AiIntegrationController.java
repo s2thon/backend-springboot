@@ -1,6 +1,8 @@
 package com.example.backend.controller;
 
 import com.example.backend.service.AiIntegrationService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,12 +11,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
 import com.example.backend.model.ChatResponse;
@@ -48,26 +53,75 @@ public class AiIntegrationController {
     @PostMapping("/chat-invoke")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ChatResponse> invokeChat(@RequestBody Map<String, String> body, HttpServletRequest request) {
-        final String jwtToken = request.getHeader(HttpHeaders.AUTHORIZATION);
-
-        logger.info("Received chat request with message: {}", body.get("message"));
-
-        Optional<String> fastApiResponseOptional = aiIntegrationService.forwardRequest("/chat-invoke", body, jwtToken)
-                .blockOptional();
-
-        if (!fastApiResponseOptional.isPresent()) {
-            logger.error("Empty response from FastAPI");
-            return ResponseEntity.ok(new ChatResponse("AI servisinden yanıt alınamadı", new String[] {}));
+        // 1. Giriş parametrelerini kontrol et
+        if (body == null || !body.containsKey("message")) {
+            logger.warn("Invalid request body received");
+            return ResponseEntity.badRequest().body(
+                    new ChatResponse("Geçersiz istek formatı", new String[] { "Lütfen geçerli bir mesaj gönderin" }));
         }
 
+        final String jwtToken = request.getHeader(HttpHeaders.AUTHORIZATION);
+        final String userMessage = body.get("message");
+
+        logger.info("Received chat request from user. Message length: {}", userMessage.length());
+
+        // 2. FastAPI'ye istek gönder
         try {
-            // JSON'ı parse et ve ChatResponse'ye dönüştür
+            Optional<String> fastApiResponseOptional = aiIntegrationService
+                    .forwardRequest("/chat-invoke", body, jwtToken)
+                    .blockOptional(Duration.ofSeconds(30)); // Timeout ekledik
+
+            if (!fastApiResponseOptional.isPresent()) {
+                logger.error("Empty response from FastAPI for message: {}", userMessage);
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                        .body(new ChatResponse("AI servisi yanıt vermiyor",
+                                new String[] { "Daha sonra tekrar deneyin" }));
+            }
+
+            String fastApiResponse = fastApiResponseOptional.get();
+            logger.debug("Raw FastAPI response: {}", fastApiResponse);
+
+            // 3. JSON validasyonu ve dönüşüm
             ObjectMapper mapper = new ObjectMapper();
-            ChatResponse response = mapper.readValue(fastApiResponseOptional.get(), ChatResponse.class);
+
+            // Önce genel JSON yapısını kontrol et
+            JsonNode rootNode = mapper.readTree(fastApiResponse);
+
+            if (!rootNode.has("output")) {
+                logger.error("Missing 'output' field in FastAPI response. Full response: {}", fastApiResponse);
+                return ResponseEntity.ok(
+                        new ChatResponse("AI yanıt formatı geçersiz", new String[] { "Sistem yöneticisine başvurun" }));
+            }
+
+            // Daha detaylı validasyon
+            ChatResponse response;
+            try {
+                response = mapper.readValue(fastApiResponse, ChatResponse.class);
+
+                // Yanıt içeriğini kontrol et
+                if (response.getOutput() == null || response.getOutput().trim().isEmpty()) {
+                    logger.warn("Empty output in otherwise valid response");
+                    response.setOutput("AI boş yanıt verdi");
+                }
+
+                // Önerileri kontrol et (opsiyonel)
+                if (response.getSuggestions() == null) {
+                    response.setSuggestions(new String[0]);
+                }
+
+            } catch (JsonProcessingException e) {
+                logger.error("JSON parsing failed. Response: {}", fastApiResponse, e);
+                return ResponseEntity.ok(
+                        new ChatResponse("Teknik bir sorun oluştu", new String[] { "Daha sonra tekrar deneyin" }));
+            }
+
+            logger.info("Successfully processed response for message length: {}", userMessage.length());
             return ResponseEntity.ok(response);
+
         } catch (Exception e) {
-            logger.error("Failed to parse FastAPI response: {}", e.getMessage());
-            return ResponseEntity.ok(new ChatResponse("Yanıt işlenirken hata oluştu", new String[] {}));
+            logger.error("Unexpected error processing chat request. Message: {}", userMessage, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ChatResponse("Sistem hatası oluştu", new String[] { "Destek ekibine başvurun" }));
         }
     }
 
